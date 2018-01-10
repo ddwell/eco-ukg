@@ -1,3 +1,159 @@
+
+# coding: utf-8
+
+# In[278]:
+
+import subprocess,os
+# result = subprocess.run( ['mkdir','da'], stdout=subprocess.PIPE )
+# print(result.stdout.decode())
+
+
+# In[276]:
+
+pwd = 'C:\\Users\\ddwell\\Documents\\Ecology'
+
+def _get_input_files(directory, extensions=['.csv']):    
+    files_list = []    
+    filenames_array = [filenames for root, dirnames, filenames in os.walk(directory)]
+    files  = [val for sublist in filenames_array for val in sublist]    
+    
+    if len(extensions) <= 1:
+        files_list = [os.path.join(directory,file) for file in files if file.endswith(extensions[0])]
+    else:
+        for file in files:
+            for ext in extensions:
+                if file.endswith(ext):
+                    files_list.append(os.path.join(directory,file))
+    return files_list
+                
+
+files = _get_input_files(os.path.join(pwd,'data'), extensions=['.txt'])
+files
+
+
+# ## Selenium
+
+# In[152]:
+
+import re
+import os
+from decimal import Decimal 
+import numpy as np
+import time,datetime
+import dateutil.parser as dparser
+from collections import Counter
+
+import urllib.request
+from bs4 import BeautifulSoup as BS
+from selenium import webdriver
+
+
+# In[114]:
+
+path_to_chromedriver = 'C:\Games\chromedriver\chromedriver.exe' # change path as needed
+browser = webdriver.Chrome(executable_path = path_to_chromedriver)
+
+
+# In[115]:
+
+pageURL = 'http://ceb-uk.kz/map/'
+browser.get(pageURL)
+browser.find_element_by_class_name('toggle-menu').click()
+
+
+# In[309]:
+
+def get_posts_info(content):
+    posts_data = {}
+
+    for post in content.find_all("div",{'class':'clear item'}):
+        
+        post_name = post.find('b').contents[0]
+        post_id = re.findall(r'\d+', post_name)[0]
+        
+        post_info =  {post_id:{ 
+            'post_name':post_name,
+            'post_description':post.find("div",{'class':'lite'}).contents[0], 
+            'post_address':post.find("div",{'class':'lite'}).contents[2].text}}
+
+        posts_data.update(post_info)
+        
+    return posts_data
+
+content = BS(browser.page_source, 'lxml')  
+posts_data = get_posts_info(content)
+
+with open('data/posts.json', 'w') as csvfile:
+    csvfile.write(str(posts_data))
+
+
+# In[118]:
+
+content = BS(browser.page_source, 'lxml') 
+text = content.find("span",{'id':'date'}).text
+
+
+# In[119]:
+
+timestamp = dparser.parse(text, fuzzy=True).strftime("%Y-%m-%d %H:%M:%S")
+timestamp
+
+
+# In[418]:
+
+def get_post_measurements(content):
+    
+    popup = content.find("div",{'class':'leaflet-popup-content-wrapper'})
+    post_name = popup.find("div",{'class':'popup'}).find('b').contents[0]
+    post_id = re.findall(r'\d+', post_name)[0]
+
+    post_measurements = {}
+
+    for row in popup.find("div",{'class':'leaflet-popup-content'}).find_all("div",{'class':'indicators'}):
+        for indicator in row.find_all("div",{'class':'clear'}):
+            if indicator is not None:
+                param = indicator.find('b').text[:-1]
+                measurement = indicator.contents[3][:-4].strip()
+                post_measurements.update({param : measurement})
+
+    return post_id,post_measurements
+
+data_header, data_entry = [], []
+
+for i,element in enumerate(browser.find_elements_by_class_name('clear')):
+    element.click()
+    content = BS(browser.page_source, 'lxml') 
+    
+    post_id, post_measurements = get_post_measurements(content)
+    
+    data_header.append( ','.join([post_id+'_'+x for x in post_measurements.keys()]) )
+    data_entry.append( ','.join(post_measurements.values()) ) 
+    
+    delay = np.random.randint(3) + np.random.rand()
+    time.sleep(delay)
+    
+    if i>=8:
+        break  
+
+print('timestamp,' + ',\t'.join(data_header))
+print(str(timestamp)+','+ ',\t'.join(data_entry))
+
+
+# In[134]:
+
+# browser.find_element_by_class_name('toggle-menu').click()
+browser.find_elements_by_tag_name('option')[-1].click()# class_name('switcher').click()
+
+
+# In[122]:
+
+content = BS(browser.page_source, 'lxml') 
+
+
+# ## Extraction
+
+# In[30]:
+
 import re
 import os
 from decimal import Decimal 
@@ -37,7 +193,7 @@ def get_weather_measurements(content):
             weather_data += ['-1']*6
     return weather_data
 
-def getMeasurementsNow(browser, spf = 1200.0, period = 60*60*24, pageURL = 'http://ceb-uk.kz/map/'):    
+def getMeasurementsNow(browser, spf = 1200.0, period = 60*60*24,pageURL = 'http://ceb-uk.kz/map/'):    
         
     outfilename = os.path.join(os.path.abspath('data'),time.strftime('%Y-%m-%d', time.localtime(time.time())) + '.csv')
     
@@ -103,7 +259,25 @@ def getMeasurementsNow(browser, spf = 1200.0, period = 60*60*24, pageURL = 'http
 
     except:
         print("\nprocess interrupted %s" % time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) 
-        
+
+
+# In[15]:
+
+path_to_chromedriver = os.path.join(os.path.abspath('chromedriver'), 'chromedriver.exe') 
+browser = webdriver.Chrome(executable_path = path_to_chromedriver)
+
+pageURL = 'http://ceb-uk.kz/map/'
+#browser.get(pageURL)
+#browser.find_element_by_class_name('toggle-menu').click()
+
+# try:
+getMeasurementsNow(pageURL = pageURL)
+# except:
+browser.close()
+
+
+# In[ ]:
+
 pageURL = 'http://ceb-uk.kz/map/'
 path_to_chromedriver = os.path.join(os.path.abspath('chromedriver'), 'chromedriver.exe') 
 
@@ -129,3 +303,4 @@ try:
 except(KeyboardInterrupt, SystemExit):    
     servertime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     print('%s process interrupted' % servertime)        
+
