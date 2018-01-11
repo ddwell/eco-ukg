@@ -152,7 +152,7 @@ content = BS(browser.page_source, 'lxml')
 
 # ## Extraction
 
-# In[30]:
+# In[1]:
 
 import re
 import os
@@ -193,7 +193,7 @@ def get_weather_measurements(content):
             weather_data += ['-1']*6
     return weather_data
 
-def getMeasurementsNow(browser, spf = 1200.0, period = 60*60*24,pageURL = 'http://ceb-uk.kz/map/'):    
+def getMeasurementsNow(spf = 1200.0, period = 60*60*24, pageURL = 'http://ceb-uk.kz/map/'):    
         
     outfilename = os.path.join(os.path.abspath('data'),time.strftime('%Y-%m-%d', time.localtime(time.time())) + '.csv')
     
@@ -290,8 +290,12 @@ try:
             starttime = time.time() 
             
             browser = webdriver.Chrome(executable_path = path_to_chromedriver)
+            delay = 2+np.random.randint(2) + np.random.rand()
+            time.sleep(delay)
             try:
-                getMeasurementsNow(pageURL = pageURL, browser = browser)                
+                getMeasurementsNow(pageURL = pageURL) 
+                delay = 2+np.random.randint(2) + np.random.rand()
+                time.sleep(delay)
                 browser.close()
             except:
                 browser.close()
@@ -303,4 +307,33 @@ try:
 except(KeyboardInterrupt, SystemExit):    
     servertime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     print('%s process interrupted' % servertime)        
+
+
+# #### with Tor
+
+# In[33]:
+
+os.environ["TBB_PATH"] = "C:\\Users\\ddwell\\Desktop\\Tor Browser\\" #Browser\\firefox.exe
+environ.get('TBB_PATH')
+
+
+# In[49]:
+
+# os.environ["PATH"] =  os.environ["PATH"] + 'C:\\Users\\ddwell\\Documents\\eco-ukg\\chromedriver\\geckodriver.exe;'
+
+os.environ["PATH"]
+
+
+# In[ ]:
+
+'C:\\Users\\ddwell\\Desktop\\Tor Browser\\Browser:C:\\Users\\ddwell\\Desktop\\Tor Browser\\Browser:C:\\Users\\ddwell\\Desktop\\Tor Browser\\Browser:C:\\ProgramData\\Anaconda3\\Library\\bin;C:\\ProgramData\\Anaconda3\\Library\\bin;C:\\ProgramData\\Anaconda3;C:\\ProgramData\\Anaconda3\\Library\\mingw-w64\\bin;C:\\ProgramData\\Anaconda3\\Library\\usr\\bin;C:\\ProgramData\\Anaconda3\\Library\\bin;C:\\ProgramData\\Anaconda3\\Scripts;C:\\ProgramData\\Anaconda3\\Library\\bin;C:\\Games\\Python35\\Lib\\site-packages\\PyQt5;C:\\Program Files (x86)\\Intel\\iCLS Client\\;C:\\Program Files\\Intel\\iCLS Client\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\ProgramData\\Anaconda3;C:\\ProgramData\\Anaconda3\\Scripts;C:\\ProgramData\\Anaconda3\\Library\\bin;C:\\Program Files (x86)\\Skype\\Phone\\;C:\\Program Files (x86)\\QuickTime Alternative\\QTSystem;C:\\Program Files\\Git\\cmd;C:\\Users\\ddwell\\AppData\\Local\\Microsoft\\WindowsApps;'
+
+
+# In[48]:
+
+from tbselenium.tbdriver import TorBrowserDriver
+with TorBrowserDriver("C:\\Users\\ddwell\\Desktop\\Tor Browser\\" ) as driver: #os.path.join(os.path.abspath('browser'), 'firefox.exe')
+    driver.get('https://check.torproject.org')
+    
+    browser = webdriver.Firefox(capabilities=firefox_capabilities)
 

@@ -37,7 +37,7 @@ def get_weather_measurements(content):
             weather_data += ['-1']*6
     return weather_data
 
-def getMeasurementsNow(browser, spf = 1200.0, period = 60*60*24, pageURL = 'http://ceb-uk.kz/map/'):    
+def getMeasurementsNow(spf = 1200.0, period = 60*60*24, pageURL = 'http://ceb-uk.kz/map/'):    
         
     outfilename = os.path.join(os.path.abspath('data'),time.strftime('%Y-%m-%d', time.localtime(time.time())) + '.csv')
     
@@ -116,8 +116,12 @@ try:
             starttime = time.time() 
             
             browser = webdriver.Chrome(executable_path = path_to_chromedriver)
+            delay = 2+np.random.randint(2) + np.random.rand()
+            time.sleep(delay)
             try:
-                getMeasurementsNow(pageURL = pageURL, browser = browser)                
+                getMeasurementsNow(pageURL = pageURL) 
+                delay = 2+np.random.randint(2) + np.random.rand()
+                time.sleep(delay)
                 browser.close()
             except:
                 browser.close()
